@@ -1,13 +1,17 @@
-import { CheckCircle2, Clock, ShoppingCart, Truck } from "lucide-react";
+import { Check, CheckCircle2, Clock, ShoppingCart, Truck } from "lucide-react";
 import Button from "../ui/Button";
 import Badge from "../ui/Badge";
 import { formatCurrency } from "../../lib/utils";
 
-export default function PriceCompareCard({ entry, best, onAdd }) {
+export default function PriceCompareCard({ entry, best, onAdd, added }) {
   const supplier = entry.supplier;
 
   return (
-    <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+    <div
+      className={`rounded-3xl border bg-white p-5 shadow-sm transition ${
+        added ? "border-emerald-300 ring-4 ring-emerald-50" : "border-slate-200"
+      }`}
+    >
       <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
         <div>
           <div className="flex flex-wrap items-center gap-2">
@@ -17,6 +21,7 @@ export default function PriceCompareCard({ entry, best, onAdd }) {
 
             {best && <Badge>Best price</Badge>}
             {supplier?.isVerified && <Badge tone="blue">Verified</Badge>}
+            {added && <Badge tone="emerald">Added to cart</Badge>}
           </div>
 
           <div className="mt-3 flex flex-wrap gap-4 text-sm font-semibold text-slate-500">
@@ -43,9 +48,14 @@ export default function PriceCompareCard({ entry, best, onAdd }) {
             {formatCurrency(entry.price)}
           </p>
 
-          <Button onClick={onAdd} className="mt-4 w-full md:w-auto">
-            <ShoppingCart size={18} />
-            Add
+          <Button
+            onClick={onAdd}
+            className={`mt-4 w-full md:w-auto ${
+              added ? "bg-emerald-700 hover:bg-emerald-700" : ""
+            }`}
+          >
+            {added ? <Check size={18} /> : <ShoppingCart size={18} />}
+            {added ? "Added" : "Add"}
           </Button>
         </div>
       </div>

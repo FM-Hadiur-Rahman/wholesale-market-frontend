@@ -1,23 +1,41 @@
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useMemo, useState } from "react";
 
 const CartContext = createContext();
 
 export function CartProvider({ children }) {
   const [cart, setCart] = useState([]);
 
+  const getItemId = (product, supplier) => {
+    const productId = product._id || product.id;
+    const supplierId = supplier._id || supplier.id;
+    return `${productId}-${supplierId}`;
+  };
+
+  const isInCart = (product, supplierEntry) => {
+    if (!product || !supplierEntry?.supplier) return false;
+
+    const supplier = supplierEntry.supplier;
+    const itemId = getItemId(product, supplier);
+
+    return cart.some((item) => item.id === itemId);
+  };
+
   const addToCart = (product, supplierEntry) => {
     const supplier = supplierEntry.supplier;
+    const productId = product._id || product.id;
+    const supplierId = supplier._id || supplier.id;
+    const itemId = `${productId}-${supplierId}`;
 
     setCart((prev) => {
-      const existing = prev.find(
-        (item) =>
-          item.productId === product._id && item.supplierId === supplier._id,
-      );
+      const existing = prev.find((item) => item.id === itemId);
 
       if (existing) {
         return prev.map((item) =>
-          item.id === existing.id
-            ? { ...item, quantity: item.quantity + supplierEntry.minOrder }
+          item.id === itemId
+            ? {
+                ...item,
+                quantity: item.quantity + (supplierEntry.minOrder || 1),
+              }
             : item,
         );
       }
@@ -25,10 +43,10 @@ export function CartProvider({ children }) {
       return [
         ...prev,
         {
-          id: `${product._id}-${supplier._id}`,
-          productId: product._id,
+          id: itemId,
+          productId,
           name: product.name,
-          supplierId: supplier._id,
+          supplierId,
           supplier: supplier.name,
           supplierWhatsapp: supplier.whatsappNumber,
           price: supplierEntry.price,
@@ -61,9 +79,22 @@ export function CartProvider({ children }) {
 
   const clearCart = () => setCart([]);
 
+  const cartCount = useMemo(
+    () => cart.reduce((total, item) => total + item.quantity, 0),
+    [cart],
+  );
+
   return (
     <CartContext.Provider
-      value={{ cart, addToCart, removeFromCart, updateQty, clearCart }}
+      value={{
+        cart,
+        cartCount,
+        addToCart,
+        removeFromCart,
+        updateQty,
+        clearCart,
+        isInCart,
+      }}
     >
       {children}
     </CartContext.Provider>

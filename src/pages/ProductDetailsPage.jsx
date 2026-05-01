@@ -11,17 +11,19 @@ import { useCart } from "../context/CartContext";
 
 export default function ProductDetailsPage() {
   const { id } = useParams();
-  const { addToCart } = useCart();
+  const { addToCart, isInCart } = useCart();
 
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
 
   useEffect(() => {
     const loadProduct = async () => {
       try {
         setLoading(true);
         setError("");
+
         const data = await getProductById(id);
         setProduct(data);
       } catch (err) {
@@ -55,6 +57,19 @@ export default function ProductDetailsPage() {
   );
 
   const bestEntry = sortedSuppliers[0];
+
+  const handleAddToCart = (entry) => {
+    if (!entry) return;
+
+    addToCart(product, entry);
+    setSuccessMessage(`${product.name} added to cart`);
+
+    setTimeout(() => {
+      setSuccessMessage("");
+    }, 2500);
+  };
+
+  const bestEntryAdded = bestEntry ? isInCart(product, bestEntry) : false;
 
   return (
     <section className="mx-auto max-w-7xl px-4 py-10 lg:px-8">
@@ -120,10 +135,13 @@ export default function ProductDetailsPage() {
             <Button
               size="lg"
               disabled={!bestEntry}
-              onClick={() => addToCart(product, bestEntry)}
+              onClick={() => handleAddToCart(bestEntry)}
+              className={
+                bestEntryAdded ? "bg-emerald-700 hover:bg-emerald-700" : ""
+              }
             >
               <ShoppingCart size={20} />
-              Add Best Price
+              {bestEntryAdded ? "✓ Added to Cart" : "Add Best Price"}
             </Button>
 
             <Button size="lg" variant="outline">
@@ -131,6 +149,12 @@ export default function ProductDetailsPage() {
               Request Availability
             </Button>
           </div>
+
+          {successMessage && (
+            <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-700">
+              ✅ {successMessage}
+            </div>
+          )}
         </div>
       </div>
 
@@ -151,7 +175,8 @@ export default function ProductDetailsPage() {
               key={entry.supplier?._id || index}
               entry={entry}
               best={index === 0}
-              onAdd={() => addToCart(product, entry)}
+              added={isInCart(product, entry)}
+              onAdd={() => handleAddToCart(entry)}
             />
           ))}
         </div>
